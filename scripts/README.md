@@ -4,7 +4,7 @@
 |--------|---------|
 | `scrape_reviews.py` | Fetch reviews from Google Play for CBE, BOA, and Dashen |
 | `preprocess_reviews.py` | Clean raw data → `data/processed/reviews_clean.csv` |
-| `run_sentiment_analysis.py` | DistilBERT sentiment + theme labels → `data/analysis/reviews_sentiment.csv` |
+| `run_sentiment_analysis.py` | Sentiment + theme labels → `data/analysis/reviews_sentiment.csv` |
 
 Run from project root:
 
