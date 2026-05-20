@@ -9,6 +9,7 @@ fintech-review-analytics/
 ├── data/raw/              # Raw scraped CSV (gitignored)
 ├── data/processed/        # Cleaned reviews (gitignored)
 ├── data/analysis/         # Sentiment + themes output (gitignored)
+├── db/                    # PostgreSQL schema + verification SQL (Task 3)
 ├── scripts/               # CLI entry points
 ├── src/                   # Reusable modules
 ├── tests/                 # Unit tests
@@ -114,6 +115,77 @@ Output: `data/analysis/reviews_sentiment.csv` with columns
 `review_id`, `review_text`, `sentiment_label`, `sentiment_score`, `identified_theme`, plus `bank`, `rating`, `date`, `vader_compound`.
 
 Set `HF_HOME=.cache/huggingface` to cache the transformer model locally.
+
+## Task 3: PostgreSQL persistence
+
+### Install PostgreSQL (Ubuntu / Debian)
+
+```bash
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib
+sudo systemctl enable --now postgresql
+```
+
+Create the database (default superuser is often `postgres`):
+
+```bash
+sudo -u postgres psql -c "CREATE DATABASE bank_reviews;"
+```
+
+### Apply schema
+
+From the project root:
+
+```bash
+sudo -u postgres psql -d bank_reviews -f db/schema.sql
+```
+
+Schema file: `db/schema.sql` — tables `banks` (`bank_id`, `bank_name`, `app_name`) and `reviews` (`review_id`, `bank_id`, `review_text`, `rating`, `review_date`, `sentiment_label`, `sentiment_score`, `identified_theme`, `source`).
+
+### Environment variables
+
+The loader uses libpq-style variables (defaults in parentheses):
+
+| Variable | Default |
+|----------|---------|
+| `PGHOST` | `localhost` |
+| `PGPORT` | `5432` |
+| `PGDATABASE` | `bank_reviews` |
+| `PGUSER` | `postgres` |
+| `PGPASSWORD` | empty |
+
+### Load CSV data
+
+After preprocessing and (recommended) sentiment analysis:
+
+```bash
+# Full columns (preferred): uses data/analysis/reviews_sentiment.csv
+python scripts/load_reviews_to_postgres.py --schema db/schema.sql --input data/analysis/reviews_sentiment.csv
+
+# Clean CSV only (sentiment/theme columns stored as NULL):
+python scripts/load_reviews_to_postgres.py --schema db/schema.sql --input data/processed/reviews_clean.csv --from-clean
+```
+
+The script seeds `banks`, replaces all rows in `reviews`, and prints verification summaries (counts per bank, average rating, null checks).
+
+### Verification SQL
+
+```bash
+sudo -u postgres psql -d bank_reviews -f db/verify_queries.sql
+```
+
+Or ad hoc:
+
+```bash
+python scripts/load_reviews_to_postgres.py --verify-only
+```
+
+*(Requires existing DB connection and schema; does not load CSV.)*
+
+### KPI notes
+
+- Target **>1,000** reviews in `reviews` after a full scrape + preprocess + sentiment run (see Task 1 counts).
+- Minimum viable: **≥400** rows loaded from your cleaned CSV; the loader warns if fewer.
 
 ## Testing & CI
 
