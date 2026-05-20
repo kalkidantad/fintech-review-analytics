@@ -10,6 +10,7 @@ fintech-review-analytics/
 ├── data/processed/        # Cleaned reviews (gitignored)
 ├── data/analysis/         # Sentiment + themes output (gitignored)
 ├── db/                    # PostgreSQL schema + verification SQL (Task 3)
+├── reports/               # Figures + PDF report (Task 4)
 ├── scripts/               # CLI entry points
 ├── src/                   # Reusable modules
 ├── tests/                 # Unit tests
@@ -186,6 +187,44 @@ python scripts/load_reviews_to_postgres.py --verify-only
 
 - Target **>1,000** reviews in `reviews` after a full scrape + preprocess + sentiment run (see Task 1 counts).
 - Minimum viable: **≥400** rows loaded from your cleaned CSV; the loader warns if fewer.
+
+## Task 4: Insights, visualizations, and report
+
+### Prerequisite
+
+Run Task 2 so `data/analysis/reviews_sentiment.csv` exists (gitignored locally).
+
+### Generate figures (3–5 plots)
+
+Writes PNGs under `reports/figures/`:
+
+```bash
+python scripts/generate_insights_visualizations.py --input data/analysis/reviews_sentiment.csv
+```
+
+Plots include: sentiment mix by bank (stacked bars), rating distribution (box + strip), theme frequency per bank, TF-IDF keyword bars per bank, and a monthly negative-share trend when the date range supports it.
+
+### Build the PDF report
+
+Embeds those figures into a Medium-style narrative (drivers, pain points, bank-level recommendations, cross-bank comparison, ethics):
+
+```bash
+python scripts/build_insights_report_pdf.py \
+  --input data/analysis/reviews_sentiment.csv \
+  --figures-dir reports/figures \
+  --output reports/fintech_insights_report.pdf
+```
+
+Evidence for satisfaction drivers and pain points is computed in `src/insights_metrics.py` (theme shares within positive/high-rating vs negative/low-rating segments, plus TF-IDF keywords).
+
+### Biases and limitations
+
+Store reviews skew toward extreme experiences (**negativity bias**), may be **date-limited** relative to the full user base, and mix languages while models are **English-centric**. Treat bank-to-bank differences as descriptive signals, not causal proof of app quality.
+
+### KPI notes
+
+- Deliverable PDF: `reports/fintech_insights_report.pdf` (regenerated locally; not committed if you keep `reports/*.pdf` out of git).
+- Interim narrative: `reports/interim_report.md` (Tasks 1–2) may be updated alongside Task 4.
 
 ## Testing & CI
 
